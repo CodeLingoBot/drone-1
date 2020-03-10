@@ -202,13 +202,15 @@ func (q *queue) signal(ctx context.Context) error {
 }
 
 func (q *queue) start() error {
+	ticker := time.NewTicker(q.interval)
+	defer ticker.Stop()
 	for {
 		select {
 		case <-q.ctx.Done():
 			return q.ctx.Err()
 		case <-q.ready:
 			q.signal(q.ctx)
-		case <-time.After(q.interval):
+		case <-ticker.C:
 			q.signal(q.ctx)
 		}
 	}

@@ -62,6 +62,10 @@ func HandleGlobal(
 
 		events, errc := events.Subscribe(ctx)
 		logger.Debugln("events: stream opened")
+		streamTicker := time.NewTicker(time.Hour)
+		pingTicker := time.NewTicker(pingInterval)
+		defer streamTicker.Stop()
+		defer pingTicker.Stop()
 
 	L:
 		for {
@@ -72,10 +76,10 @@ func HandleGlobal(
 			case <-errc:
 				logger.Debugln("events: stream error")
 				break L
-			case <-time.After(time.Hour):
+			case <-streamTicker.C:
 				logger.Debugln("events: stream timeout")
 				break L
-			case <-time.After(pingInterval):
+			case <-pingTicker.C:
 				io.WriteString(w, ": ping\n\n")
 				f.Flush()
 			case event := <-events:

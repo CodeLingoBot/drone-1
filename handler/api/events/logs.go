@@ -102,6 +102,11 @@ func HandleLogStream(
 			return
 		}
 
+		timeoutTicker := time.NewTicker(time.Hour)
+		pingTicker := time.NewTicker(pingInterval)
+		defer timeoutTicker.Stop()
+		defer pingTicker.Stop()
+
 	L:
 		for {
 			select {
@@ -109,9 +114,9 @@ func HandleLogStream(
 				break L
 			case <-errc:
 				break L
-			case <-time.After(time.Hour):
+			case <-timeoutTicker.C:
 				break L
-			case <-time.After(pingInterval):
+			case <-pingTicker.C:
 				io.WriteString(w, ": ping\n\n")
 			case line := <-linec:
 				io.WriteString(w, "data: ")

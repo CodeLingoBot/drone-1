@@ -48,12 +48,14 @@ func (c *canceller) Cancel(ctx context.Context, id int64) error {
 }
 
 func (c *canceller) Cancelled(ctx context.Context, id int64) (bool, error) {
+	ticker := time.NewTicker(time.Minute)
 	subscriber := make(chan struct{})
 	c.Lock()
 	c.subscribers[subscriber] = id
 	c.Unlock()
 
 	defer func() {
+		ticker.Stop()
 		c.Lock()
 		delete(c.subscribers, subscriber)
 		c.Unlock()
@@ -63,7 +65,7 @@ func (c *canceller) Cancelled(ctx context.Context, id int64) (bool, error) {
 		select {
 		case <-ctx.Done():
 			return false, ctx.Err()
-		case <-time.After(time.Minute):
+		case <-ticker.C:
 			c.Lock()
 			_, ok := c.cancelled[id]
 			c.Unlock()
